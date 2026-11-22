@@ -120,15 +120,22 @@ const I18N = {
 
     "form.name": "Full Name *",
     "form.namePh": "Your name",
-    "form.email": "Email *",
-    "form.emailPh": "you@company.com",
     "form.company": "Company",
     "form.companyPh": "Company name",
+    "form.email": "Email *",
+    "form.emailPh": "you@company.com",
+    "form.phone": "Phone / WhatsApp",
+    "form.phonePh": "+212 6 00 00 00 00",
     "form.service": "Service of Interest",
     "form.servicePh": "Select a service",
-    "form.message": "Message *",
+    "form.message": "Project Description / Message *",
     "form.messagePh": "Describe your project or request...",
+    "form.consent": "I agree to the processing of my personal data for the purpose of responding to this inquiry.",
     "form.submit": "Send Request",
+
+    "form.success": "Thank you! Your request has been received. We'll get back to you within one business day.",
+    "form.error": "Something went wrong. Please try again or email us directly at contact@tissirconsulting.com.",
+    "form.sending": "Sending...",
 
     "footer.tagline": "Engineering Solutions. Strategic Consulting. Sustainable Growth.",
     "footer.company": "Company",
@@ -253,15 +260,22 @@ const I18N = {
 
     "form.name": "Nom complet *",
     "form.namePh": "Votre nom",
-    "form.email": "E-mail *",
-    "form.emailPh": "vous@entreprise.com",
     "form.company": "Société",
     "form.companyPh": "Nom de la société",
+    "form.email": "E-mail *",
+    "form.emailPh": "vous@entreprise.com",
+    "form.phone": "Téléphone / WhatsApp",
+    "form.phonePh": "+212 6 00 00 00 00",
     "form.service": "Service souhaité",
     "form.servicePh": "Sélectionnez un service",
-    "form.message": "Message *",
+    "form.message": "Description du projet / Message *",
     "form.messagePh": "Décrivez votre projet ou votre demande...",
+    "form.consent": "J'accepte le traitement de mes données personnelles dans le but de répondre à cette demande.",
     "form.submit": "Envoyer la demande",
+
+    "form.success": "Merci ! Votre demande a bien été reçue. Nous vous répondrons sous un jour ouvré.",
+    "form.error": "Une erreur est survenue. Veuillez réessayer ou nous écrire directement à contact@tissirconsulting.com.",
+    "form.sending": "Envoi en cours...",
 
     "footer.tagline": "Solutions d'ingénierie. Conseil stratégique. Croissance durable.",
     "footer.company": "Société",
@@ -386,15 +400,22 @@ const I18N = {
 
     "form.name": "الاسم الكامل *",
     "form.namePh": "اسمك",
-    "form.email": "البريد الإلكتروني *",
-    "form.emailPh": "you@company.com",
     "form.company": "الشركة",
     "form.companyPh": "اسم الشركة",
+    "form.email": "البريد الإلكتروني *",
+    "form.emailPh": "you@company.com",
+    "form.phone": "الهاتف / واتساب",
+    "form.phonePh": "+212 6 00 00 00 00",
     "form.service": "الخدمة المطلوبة",
     "form.servicePh": "اختر خدمة",
-    "form.message": "الرسالة *",
+    "form.message": "وصف المشروع / الرسالة *",
     "form.messagePh": "صف مشروعك أو طلبك...",
+    "form.consent": "أوافق على معالجة بياناتي الشخصية لغرض الرد على هذا الاستفسار.",
     "form.submit": "إرسال الطلب",
+
+    "form.success": "شكراً لك! تم استلام طلبك. سنتواصل معك خلال يوم عمل واحد.",
+    "form.error": "حدث خطأ ما. يرجى المحاولة مرة أخرى أو مراسلتنا مباشرة على contact@tissirconsulting.com.",
+    "form.sending": "جارٍ الإرسال...",
 
     "footer.tagline": "حلول هندسية. استشارات استراتيجية. نمو مستدام.",
     "footer.company": "الشركة",
@@ -514,20 +535,72 @@ const counterObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.5 });
 document.querySelectorAll('.counter').forEach(c => counterObserver.observe(c));
 
-/* ---------- 9. CONTACT FORM (demo) ---------- */
+/* ---------- 9. CONTACT FORM — Web3Forms Integration ---------- */
 const form = document.getElementById('contactForm');
 const formStatus = document.getElementById('formStatus');
+
 if (form && formStatus) {
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
+
     const lang = document.documentElement.lang || 'en';
-    const messages = {
-      en: "Thank you! Your request has been received. We'll get back to you within one business day.",
-      fr: "Merci ! Votre demande a bien été reçue. Nous vous répondrons sous un jour ouvré.",
-      ar: "شكراً لك! تم استلام طلبك. سنتواصل معك خلال يوم عمل واحد."
-    };
-    formStatus.textContent = messages[lang] || messages.en;
-    formStatus.style.color = '#7dd3e8';
-    form.reset();
+    const t = (key) => (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+
+    // Show sending state
+    formStatus.textContent = t('form.sending');
+    formStatus.className = 'form-status sending';
+    formStatus.style.display = 'block';
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = t('form.sending');
+    }
+
+    try {
+      const formData = new FormData(form);
+      const object = Object.fromEntries(formData);
+      const json = JSON.stringify(object);
+
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: json
+      });
+
+      const result = await response.json();
+
+      if (response.status === 200 && result.success) {
+        // Success
+        formStatus.textContent = t('form.success');
+        formStatus.className = 'form-status success';
+        form.reset();
+      } else {
+        // API returned an error
+        console.error('Web3Forms error:', result);
+        formStatus.textContent = t('form.error');
+        formStatus.className = 'form-status error';
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      formStatus.textContent = t('form.error');
+      formStatus.className = 'form-status error';
+    } finally {
+      // Restore button
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('form.submit');
+      }
+
+      // Auto-hide success message after 8 seconds
+      setTimeout(() => {
+        if (formStatus.classList.contains('success')) {
+          formStatus.style.display = 'none';
+        }
+      }, 8000);
+    }
   });
 }
